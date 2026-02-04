@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="SafeGround: Know When to Trust GUI Grounding Models via Uncertainty Calibration">
+  <meta name="keywords" content="SafeGround, GUI grounding, uncertainty calibration, risk control, FDR, cascading inference">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SafeGround: Know When to Trust GUI Grounding Models</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="icon" href="./static/images/icon.png">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+
+  <style>
+    :root {
+      --sg-ink: #0d0f12;
+      --sg-slate: #2b313b;
+      --sg-mist: #e9eef3;
+      --sg-foam: #f7f9fb;
+      --sg-accent: #1e7f6e;
+      --sg-accent-soft: rgba(30, 127, 110, 0.12);
+      --sg-gold: #d9a441;
+    }
+
+    body {
+      font-family: "Space Grotesk", "Noto Sans", sans-serif;
+      color: var(--sg-ink);
+      background: var(--sg-foam);
+    }
+
+    .sg-hero {
+      background: radial-gradient(circle at 20% 20%, rgba(30, 127, 110, 0.18), transparent 55%),
+                  radial-gradient(circle at 80% 0%, rgba(217, 164, 65, 0.2), transparent 45%),
+                  linear-gradient(135deg, #ffffff 0%, #f1f6f9 100%);
+    }
+
+    .sg-hero .title {
+      font-family: "Fraunces", "Times New Roman", serif;
+      letter-spacing: -0.02em;
+    }
+
+    .sg-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--sg-accent-soft);
+      color: var(--sg-accent);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin: 6px 6px 0 0;
+    }
+
+    .sg-card {
+      background: transparent;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      height: 100%;
+    }
+
+    .sg-card-signal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 16px 30px rgba(13, 15, 18, 0.08);
+      border: 1px solid rgba(43, 49, 59, 0.12);
+    }
+
+    .sg-experiments-body {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .sg-card h3 {
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--sg-slate);
+    }
+
+    .sg-diagram {
+      background: transparent;
+      border-radius: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+    }
+
+    .sg-figure {
+      background: transparent;
+      border-radius: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+    }
+
+    .sg-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 0;
+    }
+
+    .sg-step {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 16px;
+      padding: 16px;
+      border-radius: 14px;
+      background: var(--sg-foam);
+      margin-bottom: 14px;
+    }
+
+    .sg-step:last-child {
+      margin-bottom: 0;
+    }
+
+    .sg-step-number {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--sg-accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+
+    .sg-highlight {
+      color: var(--sg-accent);
+      font-weight: 600;
+    }
+
+    .sg-metric {
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: var(--sg-ink);
+    }
+
+    .sg-muted {
+      color: #52606d;
+    }
+
+    .sg-section-title {
+      font-family: "Fraunces", "Times New Roman", serif;
+      letter-spacing: -0.01em;
+    }
+
+    .sg-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(43, 49, 59, 0.25), transparent);
+      margin: 36px 0;
+    }
+  </style>
+</head>
+<body>
+
+<section class="hero sg-hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <h1 class="title is-1 publication-title" style="display: inline-block;">SafeGround</h1>
+          </div>
+          <p class="subtitle is-4" style="max-width: 800px; margin: 0 auto;">
+            Know When to Trust GUI Grounding Models via Uncertainty Calibration
+          </p>
+          <div style="margin-top: 12px;">
+            <span class="sg-pill">Spatial uncertainty</span>
+            <span class="sg-pill">Risk-controlled actions</span>
+            <span class="sg-pill">Finite-sample FDR</span>
+            <span class="sg-pill">Black-box friendly</span>
+          </div>
+
+          <div class="column has-text-centered" style="margin-top: 20px;">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2602.02419"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/Cece1031/SAFEGROUND"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+            </div>
+          </div>
+
+          <p class="sg-muted" style="margin-top: 10px; font-size: 1rem;">
+            SafeGround helps GUI agents decide whether to execute, abstain, or cascade — preventing silent failures from uncertain clicks.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-10">
+        <h2 class="title is-3 sg-section-title">Why SafeGround</h2>
+        <div class="sg-figure" style="margin-bottom: 18px;">
+          <img src="./static/image/safeground_image6.png" alt="SafeGround figure 6" style="width: 50%; margin: 0 auto;">
+        </div>
+        <div class="sg-card">
+          <p>
+            In GUI agents, a single wrong click can trigger costly or irreversible actions — from unintended payments to deleting important files.
+            The real danger is <span class="sg-highlight">silent failure</span>: most grounding models always output a coordinate even when they are unsure.
+          </p>
+          <p style="margin-top: 12px;">
+            SafeGround makes reliability actionable by estimating <span class="sg-highlight">spatial uncertainty</span>, calibrating a decision threshold with
+            statistical guarantees, and enabling risk-controlled execution even with black-box models.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-10">
+        <h2 class="title is-3 sg-section-title">How It Works</h2>
+        <div class="sg-figure" style="margin-bottom: 18px;">
+          <img src="./static/image/safeground_image4.png" alt="SafeGround figure 4">
+        </div>
+        <div class="sg-divider"></div>
+        <div class="sg-diagram" style="margin-top: 24px;">
+          <div class="sg-step">
+            <div class="sg-step-number">1</div>
+            <div>
+              <strong>Sample multiple grounding passes.</strong>
+              SafeGround runs multiple stochastic predictions and aggregates them into a spatial distribution over the screen.
+            </div>
+          </div>
+          <div class="sg-step">
+            <div class="sg-step-number">2</div>
+            <div>
+              <strong>Measure spatial uncertainty.</strong>
+              Uncertainty is derived from ambiguity, dispersion, and concentration of the spatial density map.
+            </div>
+          </div>
+          <div class="sg-step">
+            <div class="sg-step-number">3</div>
+            <div>
+              <strong>Calibrate with Learn-Then-Test.</strong>
+              A threshold is learned on held-out data to control risk with finite-sample FDR guarantees.
+            </div>
+          </div>
+          <div class="sg-step">
+            <div class="sg-step-number">4</div>
+            <div>
+              <strong>Decide at test time.</strong>
+              Low uncertainty executes directly; high uncertainty abstains or cascades to an expert model.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-10">
+        <h2 class="title is-3 sg-section-title">Spatial Uncertainty Signals</h2>
+      </div>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-10">
+        <div class="columns">
+          <div class="column">
+            <div class="sg-card sg-card-signal">
+              <h3>Ambiguity</h3>
+              <p>Are there competing buttons or regions that could all be plausible?</p>
+            </div>
+          </div>
+          <div class="column">
+            <div class="sg-card sg-card-signal">
+              <h3>Dispersion</h3>
+              <p>Is the attention scattered across the screen instead of forming a tight cluster?</p>
+            </div>
+          </div>
+          <div class="column">
+            <div class="sg-card sg-card-signal">
+              <h3>Concentration</h3>
+              <p>Is there a clear focal point that stays stable across runs?</p>
+            </div>
+          </div>
+        </div>
+        <p class="sg-muted" style="margin-top: 12px;">
+          These signals are combined into a unified uncertainty score that captures the shape of the model’s confusion and improves AUROC / AUARC across models.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-10">
+        <h2 class="title is-3 sg-section-title">Experiments</h2>
+
+        <div class="sg-experiments-body" style="margin-top: 18px;">
+          <h3 class="title is-4 sg-section-title">Statistical Safety Guarantees</h3>
+          <div class="sg-figure" style="margin: 12px 0 18px;">
+            <img src="./static/image/safeground_image3.png" alt="SafeGround statistical safety guarantees">
+          </div>
+          <p>
+            “Maybe it works” isn’t good enough for high-stakes actions. SafeGround adopts the Learn Then Test (LTT) paradigm to calibrate the uncertainty
+            threshold and provides <span class="sg-highlight">finite-sample guarantees</span> on the False Discovery Rate (FDR).
+          </p>
+          <p style="margin-top: 10px;">
+            You set the risk level; SafeGround keeps the executed actions strictly within that limit.
+          </p>
+        </div>
+
+        <div class="sg-divider"></div>
+
+        <div class="sg-experiments-body">
+          <h3 class="title is-4 sg-section-title">Cascading Inference</h3>
+          <div class="sg-figure" style="margin: 12px 0 18px;">
+            <img src="./static/image/safeground_image5.png" alt="SafeGround cascading inference results">
+          </div>
+          <p>
+            SafeGround acts as a gatekeeper: easy tasks stay local, hard or risky tasks are detected and escalated. The cascading rate remains low while
+            system-level performance improves.
+          </p>
+          <div class="columns" style="margin-top: 12px;">
+            <div class="column">
+              <p><strong>Safe by default:</strong> execute only when uncertainty is low.</p>
+            </div>
+            <div class="column">
+              <p><strong>Efficient escalation:</strong> route only the truly hard cases to an expert model.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sg-divider"></div>
+
+        <div class="sg-experiments-body">
+          <h3 class="title is-4 sg-section-title">More Results</h3>
+          <div class="columns is-multiline" style="margin-top: 12px;">
+            <div class="column is-12">
+              <div class="sg-figure">
+                <img src="./static/image/safeground_image1.png" alt="SafeGround results figure 1">
+              </div>
+            </div>
+            <div class="column is-12">
+              <div class="sg-figure">
+                <img src="./static/image/safeground_image2.png" alt="SafeGround results figure 2">
+              </div>
+            </div>
+          </div>
+          <div class="columns" style="margin-top: 12px;">
+            <div class="column">
+              <div class="sg-metric">58.66%</div>
+              <p class="sg-muted">Accuracy on ScreenSpot-Pro with SafeGround gating.</p>
+            </div>
+            <div class="column">
+              <div class="sg-metric">+5.38%</div>
+              <p class="sg-muted">Improvement over a Gemini-only baseline.</p>
+            </div>
+            <div class="column">
+              <div class="sg-metric">Risk-controlled</div>
+              <p class="sg-muted">Executed actions respect the chosen FDR limit.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is adapted from <a rel="license"
+            href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> and <a rel="license"
+            href="https://gligen.github.io/">GLIGEN</a>, licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+            This website is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
