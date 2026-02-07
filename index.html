@@ -40,6 +40,16 @@
   <script src="./static/js/bulma-slider.min.js"></script>
   <script src="./static/js/index.js"></script>
 
+  <script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']]
+    },
+    svg: { fontCache: 'global' }
+  };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
   <style>
     :root {
       --sg-ink: #0d0f12;
@@ -191,7 +201,7 @@
       <div class="columns is-centered">
         <div class="column has-text-centered">
           <div style="display: flex; align-items: center; justify-content: center;">
-            <h1 class="title is-1 publication-title" style="display: inline-block;">SafeGround</h1>
+            <h1 class="title is-1 publication-title" style="display: inline-block;"><img style="width:1.2em; vertical-align: bottom; margin-right: 8px;" src="./static/image/icon.png" alt="SafeGround Logo"/>SafeGround</h1>
           </div>
           <p class="subtitle is-4" style="max-width: 800px; margin: 0 auto;">
             Know When to Trust GUI Grounding Models via Uncertainty Calibration
@@ -239,9 +249,11 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered">
       <div class="column is-10">
-        <h2 class="title is-3 sg-section-title">Why SafeGround</h2>
+        <h2 class="title is-3 sg-section-title"><img style="width:1.2em; vertical-align: bottom; margin-right: 8px;" src="./static/image/icon.png" alt="Logo"/>Why SafeGround</h2>
         <div class="sg-figure" style="margin-bottom: 18px;">
-          <img src="./static/image/safeground_image6.png" alt="SafeGround figure 6" style="width: 50%; margin: 0 auto;">
+          <div class="sg-image-box">
+            <img src="./static/image/fig1.png" alt="SafeGround figure 6" style="width: 50%; margin: 0 auto;">
+          </div>
         </div>
         <div class="sg-card">
           <p>
@@ -262,9 +274,11 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered">
       <div class="column is-10">
-        <h2 class="title is-3 sg-section-title">How It Works</h2>
+        <h2 class="title is-3 sg-section-title"><img style="width:1.2em; vertical-align: bottom; margin-right: 8px;" src="./static/image/icon.png" alt="Logo"/>How It Works</h2>
         <div class="sg-figure" style="margin-bottom: 18px;">
-          <img src="./static/image/safeground_image4.png" alt="SafeGround figure 4">
+          <div class="sg-image-box">
+            <img src="./static/image/fig2.png" alt="SafeGround figure 4">
+          </div>
         </div>
         <div class="sg-divider"></div>
         <div class="sg-diagram" style="margin-top: 24px;">
@@ -306,7 +320,7 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered">
       <div class="column is-10">
-        <h2 class="title is-3 sg-section-title">Spatial Uncertainty Signals</h2>
+        <h2 class="title is-3 sg-section-title"><img style="width:1.2em; vertical-align: bottom; margin-right: 8px;" src="./static/image/icon.png" alt="Logo"/>Spatial Uncertainty Signals</h2>
       </div>
     </div>
     <div class="columns is-centered">
@@ -316,24 +330,51 @@
             <div class="sg-card sg-card-signal">
               <h3>Ambiguity</h3>
               <p>Are there competing buttons or regions that could all be plausible?</p>
+              <div class="sg-equation">
+                $U_{TA} =
+                \begin{cases}
+                1 - \dfrac{S_{(1)} - S_{(2)}}{S_{(1)} + \epsilon}, & M \ge 2 \\
+                \max(0.1, 1 - S_{(1)}), & \text{otherwise}
+                \end{cases}$
+              </div>
             </div>
           </div>
           <div class="column">
             <div class="sg-card sg-card-signal">
               <h3>Dispersion</h3>
               <p>Is the attention scattered across the screen instead of forming a tight cluster?</p>
+              <div class="sg-equation">
+                $U_{IE} = -\frac{1}{\log M}\sum_{i=1}^{M} \hat{p}_i \log(\hat{p}_i + \epsilon)$
+              </div>
             </div>
           </div>
           <div class="column">
             <div class="sg-card sg-card-signal">
               <h3>Concentration</h3>
               <p>Is there a clear focal point that stays stable across runs?</p>
+              <div class="sg-equation">
+                $U_{CD} = 1 - \sum_{i=1}^{M} \hat{p}_i^{2}$
+              </div>
             </div>
           </div>
         </div>
         <p class="sg-muted" style="margin-top: 12px;">
-          These signals are combined into a unified uncertainty score that captures the shape of the model’s confusion and improves AUROC / AUARC across models.
+          These signals are combined into a unified uncertainty score $U_{\text{COM}}$ for risk-controlled decision making.
         </p>
+        <div class="columns is-vcentered" style="margin-top: 24px; gap: 20px;">
+          <div class="column is-5" style="padding-left: 30px;">
+            <div class="sg-image-box">
+              <img src="./static/image/patchexample.png" alt="Process of mapping coordinates to patch scores" style="width: 70%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+            </div>
+          </div>
+          <div class="column is-6">
+            <div style="background: #fff; border: 2px solid #e0e0e0; border-radius: 12px; padding: 24px;">
+              <p class="sg-muted" style="font-size: 0.95rem; text-align: left;">
+                <strong>From Coordinates to Region Scores:</strong> We aggregate stochastic sampling points into patch-level density maps to calculate the final uncertainty score.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -343,12 +384,14 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered">
       <div class="column is-10">
-        <h2 class="title is-3 sg-section-title">Experiments</h2>
+        <h2 class="title is-3 sg-section-title"><img style="width:1.2em; vertical-align: bottom; margin-right: 8px;" src="./static/image/icon.png" alt="Logo"/>Experiments</h2>
 
         <div class="sg-experiments-body" style="margin-top: 18px;">
           <h3 class="title is-4 sg-section-title">Statistical Safety Guarantees</h3>
           <div class="sg-figure" style="margin: 12px 0 18px;">
-            <img src="./static/image/safeground_image3.png" alt="SafeGround statistical safety guarantees">
+            <div class="sg-image-box">
+              <img src="./static/image/safeground_image3.png" alt="SafeGround statistical safety guarantees" style="width: 70%; margin: 0 auto; display: block; border-radius: 8px;">
+            </div>
           </div>
           <p>
             “Maybe it works” isn’t good enough for high-stakes actions. SafeGround adopts the Learn Then Test (LTT) paradigm to calibrate the uncertainty
@@ -364,7 +407,9 @@
         <div class="sg-experiments-body">
           <h3 class="title is-4 sg-section-title">Cascading Inference</h3>
           <div class="sg-figure" style="margin: 12px 0 18px;">
-            <img src="./static/image/safeground_image5.png" alt="SafeGround cascading inference results">
+            <div class="sg-image-box">
+              <img src="./static/image/safeground_image5.png" alt="SafeGround cascading inference results" style="width: 50%; margin: 0 auto; display: block; border-radius: 8px;">
+            </div>
           </div>
           <p>
             SafeGround acts as a gatekeeper: easy tasks stay local, hard or risky tasks are detected and escalated. The cascading rate remains low while
@@ -383,16 +428,19 @@
         <div class="sg-divider"></div>
 
         <div class="sg-experiments-body">
-          <h3 class="title is-4 sg-section-title">More Results</h3>
+          <h3 class="title is-4 sg-section-title">Better Error Detection</h3>
+          <p class="sg-muted" style="margin-top: 12px;">
+            Standard confidence scores (logits) often fail to reflect execution risk in GUI grounding. SafeGround consistently outperforms Probabilistic Confidence (PC) in distinguishing correct from incorrect actions and more effectively filters erroneous actions while preserving correct ones.
+          </p>
           <div class="columns is-multiline" style="margin-top: 12px;">
-            <div class="column is-12">
-              <div class="sg-figure">
-                <img src="./static/image/safeground_image1.png" alt="SafeGround results figure 1">
+            <div class="column is-6">
+              <div class="sg-image-box">
+                <img src="./static/image/safeground_image1.png" alt="SafeGround results figure 1" style="width: 100%; border-radius: 8px;">
               </div>
             </div>
-            <div class="column is-12">
-              <div class="sg-figure">
-                <img src="./static/image/safeground_image2.png" alt="SafeGround results figure 2">
+            <div class="column is-6">
+              <div class="sg-image-box">
+                <img src="./static/image/safeground_image2.png" alt="SafeGround results figure 2" style="width: 100%; border-radius: 8px;">
               </div>
             </div>
           </div>
@@ -413,6 +461,21 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title is-3 sg-section-title">BibTeX</h2>
+    <pre><code>@misc{wang2026safegroundknowtrustgui,
+      title={SafeGround: Know When to Trust GUI Grounding Models via Uncertainty Calibration},
+      author={Qingni Wang and Yue Fan and Xin Eric Wang},
+      year={2026},
+      eprint={2602.02419},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2602.02419},
+}</code></pre>
   </div>
 </section>
 
